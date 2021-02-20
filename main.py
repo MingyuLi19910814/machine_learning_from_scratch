@@ -3,6 +3,7 @@ from models.DecisionTreeModels import DecisionTree
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 
+
 def evaluateWithSKLearn(train_x, train_y, test_x, test_y):
     estimator = DecisionTreeClassifier(criterion='entropy')
     print('start fit sklearn')
@@ -20,13 +21,10 @@ def evaluateWithDecisionTreeScratch(train_x, train_y, test_x, test_y):
 
 
 if __name__ == "__main__":
-    train_size = 60000
-    interval = 128
-
-    processor = DataProcessor(interval=interval)
+    processor = DataProcessor()
     train_x, train_y = processor.get()
 
-    processor = DataProcessor(train='test', interval=interval)
+    processor = DataProcessor(train='test')
     test_x, test_y = processor.get()
 
-    evaluateWithSKLearn(train_x, train_y, test_x, test_y)
+    evaluateWithDecisionTreeScratch(train_x, train_y, test_x, test_y)
