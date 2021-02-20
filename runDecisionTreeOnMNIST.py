@@ -27,4 +27,4 @@ if __name__ == "__main__":
     processor = DataProcessor(train='test')
     test_x, test_y = processor.get()
 
-    evaluateWithDecisionTreeScratch(train_x, train_y, test_x, test_y)
+    evaluateWithSKLearn(train_x, train_y, test_x, test_y)

@@ -19,12 +19,10 @@ class DecisionTree:
             # the right node, stores the subtree built from the values larger than the threshold
             self.right = None
 
-    def __init__(self, algorithm='ID3'):
-        self.model = algorithm
+    def __init__(self):
         self.root = None
         self.sample_dimension = None
         self.bar = None
-        assert self.model in {'ID3', 'C45', 'CART'}
 
     """
     get the entropy of using sum(-p*log(p))
