@@ -22,8 +22,6 @@ def evaluateWithDecisionTreeScratch(train_x, train_y, test_x, test_y):
 if __name__ == "__main__":
     processor = DataProcessor()
     train_x, train_y = processor.get()
-    train_x = train_x[:20000]
-    train_y = train_y[:20000]
 
     processor = DataProcessor(train='test')
     test_x, test_y = processor.get()
