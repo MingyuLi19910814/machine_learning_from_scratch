@@ -1,6 +1,6 @@
 import numpy as np
 from tqdm import tqdm
-
+from collections import Counter
 
 class DecisionTree:
     class Node:
@@ -29,19 +29,18 @@ class DecisionTree:
     """
     @staticmethod
     def __get_entropy__(y):
-        entropy = 0.0
-        for y_val in set(y):
-            p = np.sum(y == y_val) * 1.0 / y.shape[0]
-            entropy -= p * np.log(p)
+        y_counter = Counter(y)
+        p = np.asarray(list(y_counter.values()), dtype=np.float32)
+        p /= y.shape[0]
+        entropy = np.sum(-p * np.log(p))
         return entropy
 
     """
     build the subtree from sample(x) and label(y)
     """
     def __build__(self, x, y):
-        y_val_set = set(y)
         # if all samples are from the same category, this should be a leaf node
-        if y_val_set.__len__() == 1:
+        if set(y).__len__() == 1:
             node = DecisionTree.Node()
             node.label = y[0]
             self.bar.update(y.shape[0])
@@ -55,6 +54,7 @@ class DecisionTree:
             for feature_idx in range(x.shape[1]):
                 x_feature_idx = x[:, feature_idx]
                 x_feature_idx_sorted = sorted(set(x_feature_idx))
+
                 # to handle the continuous values of the feature, the feature values are sorted in increasing order
                 # and the median of every two continuous values is computed. Try to divide the subtree with this median
                 # and get the entropy gain.
@@ -76,17 +76,20 @@ class DecisionTree:
             node.feature_idx = best_feature_idx
             node.threshold = best_threshold
 
-            x_small = x[x[:, best_feature_idx] < best_threshold]
-            y_small = y[x[:, best_feature_idx] < best_threshold]
+            isSmaller = x[:, best_feature_idx] < best_threshold
+            isLarger = x[:, best_feature_idx] >= best_threshold
+            x_small = x[isSmaller]
+            y_small = y[isSmaller]
 
-            x_large = x[x[:, best_feature_idx] >= best_threshold]
-            y_large = y[x[:, best_feature_idx] >= best_threshold]
+            x_large = x[isLarger]
+            y_large = y[isLarger]
+
             # recursively build the child subtree
             node.left = self.__build__(x_small, y_small)
             node.right = self.__build__(x_large, y_large)
             return node
 
-    def train(self, x, y):
+    def fit(self, x, y):
         self.sample_dimension = x.shape[1]
         self.bar = tqdm(total=x.shape[0])
         assert len(x.shape) == 2 and len(y.shape) == 1 and x.shape[0] == y.shape[0]

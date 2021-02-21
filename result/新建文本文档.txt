@@ -1,2 +1,0 @@
-Scratch accuracy = 0.873
-Sklearn accuracy = 0.8737
