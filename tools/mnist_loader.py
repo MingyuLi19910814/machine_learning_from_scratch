@@ -5,8 +5,9 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 class DataProcessor:
-    def __init__(self, train='train', interval = 128):
-
+    def __init__(self, train='train', interval = 128, batch_size = 1024):
+        self.idx = 0
+        self.batch_size = batch_size
         current_path = os.path.abspath(__file__)
         train_path = Path(current_path).parent.parent / 'data/mnist_train.csv'
         test_path = Path(current_path).parent.parent / 'data/mnist_test.csv'
@@ -25,5 +26,14 @@ class DataProcessor:
         else:
             return self.x, self.y
 
-
-DataProcessor()
+    def getNextBatch(self):
+        if self.idx + self.batch_size <= self.x.shape[0]:
+            batch_x = self.x[self.idx:self.idx + self.batch_size, :]
+            batch_y = self.y[self.idx:self.idx + self.batch_size]
+            self.idx += self.batch_size
+            return batch_x, batch_y, True
+        else:
+            batch_x = self.x[self.idx:, :]
+            batch_y = self.y[self.idx:]
+            self.idx = 0
+            return batch_x, batch_y, False

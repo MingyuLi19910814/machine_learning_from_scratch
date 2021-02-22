@@ -1,8 +1,6 @@
 import numpy as np
-from tqdm import tqdm
 from models.DecisionTreeClassifier import DecisionTree
 from collections import Counter
-from concurrent.futures import ProcessPoolExecutor
 
 class RandomForest:
     def __init__(self, tree_num):

@@ -6,6 +6,9 @@ class BinaryLogisticRegression:
         self.input_dim = None
         self.max_iter = max_iter
         self.learning_rate = learning_rate
+        self.w = None
+        self.b = None
+        self.optimizer = None
 
     def sigmoid(self, x):
         return 1.0 / (1.0 + tf.exp(-(tf.matmul(x, self.w) + self.b)))
@@ -36,4 +39,28 @@ class BinaryLogisticRegression:
         prediction = self.predict(x) >= 0.5
         prediction = prediction[:, 0] == y
         acc = np.sum(prediction) * 1.0 / y.shape[0]
+        return acc
+
+
+class MultiClassLogisticRegression:
+    def __init__(self, max_iter=30, learning_rate=0.01, class_num=10):
+        self.class_num = class_num
+        self.classifiers = [BinaryLogisticRegression(max_iter, learning_rate) for i in range(class_num)]
+
+    def fit(self, x, y):
+        for i in range(self.class_num):
+            labels = np.zeros_like(y)
+            labels[y == i] = 1
+            print('start training {}th classifier'.format(i))
+            self.classifiers[i].fit(x, labels)
+
+    def predict(self, x):
+        predictions = [classifier.predict(x) for classifier in self.classifiers]
+        predictions = np.hstack(predictions)
+        predictions = np.argmax(predictions, axis=1)
+        return predictions
+
+    def score(self, x, y):
+        prediction = self.predict(x)
+        acc = np.sum(prediction == y) * 1.0 / y.shape[0]
         return acc

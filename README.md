@@ -28,3 +28,13 @@ while the accuracy of sklearn is 90.71%
 ```python
 python runRandomForestOnMNIST.py
 ```
+
+# Logistic Regression
+
+Logistic regression is implemented with cross entropy loss and gradient descent using tensorflow.
+the accuracy of this implementation is 91.98%,
+the accuracy of sklearn is 91.75%
+
+```python
+python run runLogisticRegressionOnMNIST.py
+```
