@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 class DataProcessor:
-    def __init__(self, train='train', interval = 128, batch_size = 1024):
+    def __init__(self, train='train', interval=128, batch_size=1024):
         self.idx = 0
         self.batch_size = batch_size
         current_path = os.path.abspath(__file__)

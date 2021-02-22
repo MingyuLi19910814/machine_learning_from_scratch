@@ -13,7 +13,7 @@ def evaluateWithSKLearn(train_x, train_y, test_x, test_y):
 
 
 def evaluateWithDecisionTreeScratch(train_x, train_y, test_x, test_y):
-    classifier = DecisionTree()
+    classifier = DecisionTree(max_height=-1)
     classifier.fit(train_x, train_y)
     score = classifier.score(test_x, test_y)
     print('DecisionTreeScratch score = {}'.format(score))

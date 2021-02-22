@@ -1,8 +1,10 @@
 import numpy as np
 from models.DecisionTreeClassifier import DecisionTree
 from collections import Counter
+from models.ClassifierInterface import *
 
-class RandomForest:
+
+class RandomForest(MultiClassClassifier):
     def __init__(self, tree_num):
         self.tree_num = tree_num
         self.trees = []

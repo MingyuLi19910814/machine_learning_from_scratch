@@ -6,7 +6,7 @@ This project is built to implement the machine learning algorithms from scratch 
 
 The entropy-based decision tree is implemented in models/DecisionTreeClassifier.py. 
 MNIST is used to testify the performance of the implementation.
-the accuracy of this implementation on is 87.3%
+the accuracy of this implementation on is 87.25%
 while the accuracy of sklearn is 87.37%
 
 The CSV files can be downloaded from 
@@ -37,4 +37,15 @@ the accuracy of sklearn is 91.75%
 
 ```python
 python run runLogisticRegressionOnMNIST.py
+```
+
+#AdaBoost
+
+Implemented AdaBoost binary classifier based on DecisionTree of Sklearn (since the decision tree of this project doesn't support sample weight).
+Samples of two digits (1 and 2) are extracted from MNIST and trained the classifier. The classifier consists of 5 decision trees with maximum height of 3 to 
+suppress the performance of the decision tree. Experiment shows the accuracy of the five decision trees are [94.9%, 92.4%, 85.3%, 68.3%, 89.5%] and the 
+overall accuracy of the AdaBoost classifier is 97.97%.
+
+```python
+python runAdaBoostOnMnist.py
 ```

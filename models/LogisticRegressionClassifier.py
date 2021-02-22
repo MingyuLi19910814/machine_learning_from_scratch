@@ -1,8 +1,12 @@
 import tensorflow as tf
 import numpy as np
+from models.ClassifierInterface import *
 
-class BinaryLogisticRegression:
-    def __init__(self, max_iter = 30, learning_rate = 0.01):
+
+# a logistic regression for binary classification.
+# for multi-class use case, can be combined with OneVsAllClassClassifier
+class BinaryLogisticRegression(ClassifierOutputPossibility):
+    def __init__(self, max_iter=30, learning_rate=0.01):
         self.input_dim = None
         self.max_iter = max_iter
         self.learning_rate = learning_rate
@@ -16,6 +20,7 @@ class BinaryLogisticRegression:
     def safeLog(self, y):
         return tf.math.log(tf.clip_by_value(y, 1e-10, 1.0))
 
+    # use tensorflow for optimizing the loss function
     def fit(self, x, y):
         self.input_dim = x.shape[1]
         input_sample = tf.Variable(x, dtype=tf.float32)
@@ -27,40 +32,19 @@ class BinaryLogisticRegression:
         for epoch in range(self.max_iter):
             with tf.GradientTape() as tape:
                 predict = self.sigmoid(input_sample)
+                # cross entropy loss function
                 loss = -(1.0 - input_label) * self.safeLog(1 - predict) - input_label * self.safeLog(predict)
                 loss = tf.reduce_mean(loss)
                 grads = tape.gradient(loss, [self.w, self.b])
             self.optimizer.apply_gradients(zip(grads, [self.w, self.b]))
 
     def predict(self, x):
+        return self.sigmoid(tf.convert_to_tensor(x, dtype=tf.float32)).numpy() >= 0.5
+
+    def predictPossibility(self, x):
         return self.sigmoid(tf.convert_to_tensor(x, dtype=tf.float32)).numpy()
 
     def score(self, x, y):
-        prediction = self.predict(x) >= 0.5
-        prediction = prediction[:, 0] == y
+        prediction = self.predict(x) == y
         acc = np.sum(prediction) * 1.0 / y.shape[0]
-        return acc
-
-
-class MultiClassLogisticRegression:
-    def __init__(self, max_iter=30, learning_rate=0.01, class_num=10):
-        self.class_num = class_num
-        self.classifiers = [BinaryLogisticRegression(max_iter, learning_rate) for i in range(class_num)]
-
-    def fit(self, x, y):
-        for i in range(self.class_num):
-            labels = np.zeros_like(y)
-            labels[y == i] = 1
-            print('start training {}th classifier'.format(i))
-            self.classifiers[i].fit(x, labels)
-
-    def predict(self, x):
-        predictions = [classifier.predict(x) for classifier in self.classifiers]
-        predictions = np.hstack(predictions)
-        predictions = np.argmax(predictions, axis=1)
-        return predictions
-
-    def score(self, x, y):
-        prediction = self.predict(x)
-        acc = np.sum(prediction == y) * 1.0 / y.shape[0]
         return acc
