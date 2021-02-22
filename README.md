@@ -39,7 +39,7 @@ the accuracy of sklearn is 91.75%
 python run runLogisticRegressionOnMNIST.py
 ```
 
-#AdaBoost
+# AdaBoost
 
 Implemented AdaBoost binary classifier based on DecisionTree of Sklearn (since the decision tree of this project doesn't support sample weight).
 Samples of two digits (1 and 2) are extracted from MNIST and trained the classifier. The classifier consists of 5 decision trees with maximum height of 3 to 
