@@ -1,69 +1,44 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.metrics import r2_score
-from sklearn.linear_model import LinearRegression
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-from statsmodels.regression.linear_model import OLS
+from sklearn import linear_model
 
-class LinearRegressionLeastSquare:
-    def __init__(self, X, Y):
-        self.X = np.asarray(X)
-        self.Y = np.asarray(Y)
-        if self.X.shape[0] != self.Y.shape[0]:
-            raise ValueError("inconsistency between X and Y sample number!")
-        elif self.X.shape[0] == 0:
-            raise ValueError("input sample can not be empty!")
-        elif self.Y.ndim != 1:
-            raise ValueError("Y must be one dimensional")
-        self.__predict__()
+class LinearRegressionUnivariate:
+    def __init__(self):
+        self.w = 0
+        self.b = 0
 
-    def getSlope(self):
-        return self.slope
+    def fit(self, X, Y):
+        mean_x = np.mean(X)
+        mean_y = np.mean(Y)
+        self.w = np.sum((X - mean_x) * (Y - mean_y)) / np.sum((X - mean_x) ** 2)
+        self.b = mean_y - self.w * mean_x
+        print('w = {}, b = {}'.format(self.w, self.b))
 
-    def getIntersect(self):
-        return self.intersection
-
-    def __predict__(self):
-        meanX = np.mean(self.X, axis=0)
-        meanY = np.mean(self.Y)
-        self.slope = np.sum((self.X - meanX) * (self.Y - meanY)) / np.sum((self.X - meanX) ** 2)
-        self.intersection = meanY - self.slope * meanX
-        #print(self.slope, self.intersection)
-
-class LinearRegressionGradientDescent:
+class LinearRegressionMultivariate:
     def __init__(self):
         self.w = None
+        self.b = None
+
+    def fit(self, X, Y, lr=0.1, max_it=500):
+        X = np.asarray(X)
+        Y = np.asarray(Y)
+        if X.ndim != 2 or Y.ndim != 1 or X.shape[0] != Y.shape[0] or X.shape[0] == 0:
+            raise ValueError("invalid input")
+        self.w = np.random.randn(X.shape[1])
         self.b = 0
-        self.r2 = None
+        for it in range(max_it):
+            pred = self.__predict__(X)
+            loss = 0.5 * np.mean((pred - Y) ** 2)
+            dw = np.dot(X.T, pred - Y) / Y.shape[0]
+            db = np.mean(pred - Y)
+            self.w -= lr * dw
+            self.b -= lr * db
+        print('w = {}, b = {}'.format(self.w, self.b))
 
     def __predict__(self, X):
         return np.dot(X, self.w) + self.b
 
-    def __error__(self, Y, y_pred):
-        return 0.5 * np.mean(np.square((Y - y_pred)))
-
-    def fit(self, X, Y, lr, max_it):
-        X = np.asarray(X).astype(float)
-        Y = np.asarray(Y).astype(float)
-
-        if X.ndim == 1:
-            X = X.reshape((Y.shape[0], -1))
-        self.w = np.random.randn(X.shape[1])
-        train_err = []
-        for it in range(max_it):
-            pred_y = self.__predict__(X)
-            err = self.__error__(Y, pred_y)
-            train_err.append(err)
-
-            dw = np.dot(X.T, pred_y - Y) / X.shape[0]
-            db = np.mean(pred_y - Y)
-            self.w -= lr * dw
-            self.b -= lr * db
-        pred_y = self.__predict__(X)
-        mean_y = np.mean(Y)
-        self.r2 = 1 - np.sum(np.square(pred_y - Y)) / np.sum(np.square(mean_y - Y))
-        print('W = {}, b = {}'.format(self.w, self.b))
-        assert np.abs(self.r2 - r2_score(Y, pred_y)) <= 1e-13
 
 def plot(X, Y, w, b):
     plt.scatter(X, Y)
@@ -78,7 +53,7 @@ def collinearityCheck(X):
         y = X[:, idx]
         include_idx = np.arange(X.shape[1]) != idx
         x = X[:, include_idx]
-        lr = LinearRegression()
+        lr = linear_model.LinearRegression()
         lr.fit(x, y)
         y_pred = lr.predict(x)
         r2 = r2_score(y, y_pred)
@@ -103,19 +78,35 @@ def normalDistributionCheck(Y, y_pred):
     plt.hist(res)
     plt.show()
 
-if __name__ == "__main__":
+def univariate_regression():
+    w = 3.2
+    b = 20
+    x = np.random.randn(100)
+    y = w * x + b
+    lr = LinearRegressionUnivariate()
+    lr.fit(x, y)
+
+    lr = linear_model.LinearRegression()
+    lr.fit(x.reshape((-1, 1)), y.reshape((-1, 1)))
+    print('sklearn w = {}, b = {}'.format(lr.coef_, lr.intercept_))
+
+
+def multivariate_regression():
     W = np.array([-3, 5, 1, 2, 4])
     intersect = -30
     X = np.random.randn(100, W.shape[0])
     Y = np.dot(X, W) + intersect + np.random.randn(X.shape[0]) * 0.05
     collinearityCheck(X)
-    regression = LinearRegressionGradientDescent()
+    regression = LinearRegressionMultivariate()
     regression.fit(X, Y, 0.01, 5000)
+    lr = linear_model.LinearRegression()
+    lr.fit(X, Y)
+    print('sklearn w = {}, b = {}'.format(lr.coef_, lr.intercept_))
     y_pred = regression.__predict__(X)
 
     homoscedasticityCheck(Y, y_pred)
     normalDistributionCheck(Y, y_pred)
 
-    # regSklearn = LinearRegression()
-    # regSklearn.fit(X, Y)
-    # print(regSklearn.coef_, regSklearn.intercept_)
+if __name__ == "__main__":
+    #univariate_regression()
+    multivariate_regression()

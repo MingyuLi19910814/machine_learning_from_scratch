@@ -1,39 +1,44 @@
 import numpy as np
-from sklearn.datasets import load_iris
+from sklearn.metrics import *
+from sklearn import neighbors
+from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 
-class KNearestNeighbors:
-    def __init__(self, X, Y):
-        self.X = np.asarray(X)
-        self.Y = np.asarray(Y)
-        if self.X.shape[0] != self.Y.shape[0]:
-            raise ValueError("inconsistency in X and Y size")
-        if self.X.shape[0] == 0:
-            raise ValueError("input sample can not be empty")
-        if self.X.ndim == 1:
-            self.X = np.reshape(self.X, (-1, 1))
 
-    def query(self, xs, k):
-        if k > self.X.shape[0]:
-            raise ValueError('k is larger than number of data sample')
-        elif k == 0:
-            raise ValueError("k can not be zero")
-        xs = np.asarray(xs)
-        if xs.shape[0] == 0:
-            raise ValueError("query can not be empty")
-        ans = np.zeros((xs.__len__(), k), dtype=self.Y.dtype)
-        for idx, x in enumerate(xs):
+class KNearestNeighbor:
+    def fit(self, X, Y):
+        self.X = np.array(X)
+        self.Y = np.array(Y)
+        if self.X.ndim != 2 or self.X.shape[0] != self.Y.shape[0] or self.Y.ndim != 1:
+            raise ValueError("invalid input")
+
+    def predict(self, X, k):
+        ans = np.zeros(shape=(X.shape[0], k))
+        for idx, x in enumerate(X):
             dists = np.linalg.norm(x - self.X, axis=-1)
-            sortedIdx = np.argsort(dists)[:k]
-            ans[idx] = self.Y[sortedIdx]
+            index = np.argsort(dists)[:k]
+            ans[idx] = self.Y[index]
         return ans
 
-
 if __name__ == "__main__":
-    iris = load_iris()
-    X = iris.data
-    Y = iris.target
-    train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.25)
-    y_pred = KNearestNeighbors(train_x, train_y).query(test_x, 1)
-    accuracy = accuracy_score(test_y, y_pred)
+    n_samples = 1000
+    n_features = 10
+    n_informative = 8
+    n_classes = 5
+    X, Y = make_classification(n_samples=n_samples,
+                               n_features=n_features,
+                               n_informative=n_informative,
+                               n_classes=n_classes,
+                               random_state=0)
+    train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.25, random_state=0)
+    knn = KNearestNeighbor()
+    knn.fit(train_x, train_y)
+    pred_y = knn.predict(test_x, 1)
+    acc = accuracy_score(test_y, pred_y)
+    print('acc = {}'.format(acc))
+
+    knn = neighbors.KNeighborsClassifier(n_neighbors=1)
+    knn.fit(train_x, train_y)
+    pred_y = knn.predict(test_x)
+    acc = accuracy_score(test_y, pred_y)
+    print('sklearn acc = {}'.format(acc))

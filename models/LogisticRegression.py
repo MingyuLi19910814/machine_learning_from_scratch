@@ -1,57 +1,59 @@
 import numpy as np
-from matplotlib import pyplot as plt
-
-
+from sklearn.datasets import make_classification
+from sklearn.metrics import *
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn import linear_model
 class LogisticRegression:
-    def __init__(self, X, Y, lr, max_it):
+    def __init__(self):
+        self.w = None
+        self.b = None
+
+    def __predict__(self, X):
+        v = np.dot(X, self.w) + self.b
+        return 1 / (1 + np.exp(-v))
+
+    def fit(self, X, Y, lr=0.1, max_it=1000):
         X = np.asarray(X)
         Y = np.asarray(Y)
-        if X.ndim == 1:
-            X = X.reshape((-1, 1))
-        if X.shape[0] != Y.shape[0] or X.shape[0] == 0:
-            raise ValueError('input dimension error')
-        if max_it <= 0:
-            raise ValueError('iteration must be positive')
-        if lr <= 0:
-            raise ValueError('learning rate must be positive')
-        self.W = np.zeros(X.shape[1])
-        self.costs = []
-        lastCost = np.inf
-        it = 0
-        while it < max_it:
-            it += 1
-            cost = self.__cost__(X, Y)
-            self.W += -lr * self.__gradient__(X, Y)
-            self.costs.append(cost)
-            if abs(cost - lastCost) < 1e-5:
-                break
-            lastCost = cost
+        if X.ndim != 2 or X.shape[0] != Y.shape[0]:
+            raise ValueError("invalid input")
+        self.w = np.random.randn(X.shape[1])
+        self.b = 0
+        for it in range(max_it):
+            pred = self.__predict__(X)
+            dw = np.dot(X.T, pred - Y) / Y.shape[0]
+            db = np.mean(pred - Y)
+            self.w -= lr * dw
+            self.b -= lr * db
 
     def predict(self, X):
-        X = np.asarray(X, dtype=float)
-        X = X.reshape((-1, self.W.shape[0]))
-        return self.__sigmoid__(X)
-
-    def __sigmoid__(self, X):
-        return 1 / ( 1 + np.exp(-np.dot(X, self.W)))
-
-    def __gradient__(self, X, Y):
-        pred = self.__sigmoid__(X)
-        return np.dot(X.T, pred - Y) / Y.shape[0]
-
-    def __cost__(self, X, Y):
-        pred = self.__sigmoid__(X)
-        return np.mean(-Y * np.log(pred) - (1 - Y) * np.log(1 - pred))
+        X = np.asarray(X)
+        if X.ndim != 2 or X.shape[1] != self.w.shape[0]:
+            raise ValueError("invalid input")
+        pred = self.__predict__(X)
+        return pred >= 0.5
 
 if __name__ == "__main__":
-    x1 = np.random.rand(5, 1) + 1
-    x2 = np.random.rand(5, 1) - 3
-    X = np.concatenate([x1, x2], axis=0)
-    Y = np.concatenate([np.ones(5), -np.zeros(5)], axis=0)
-    regression = LogisticRegression(X, Y, 0.1, 1000)
-    plt.scatter(X, Y)
+    n_samples = 1000
+    n_classes = 2
+    n_features = 5
+    n_informative = 2
+    X, Y = make_classification(n_samples=n_samples,
+                               n_classes=n_classes,
+                               n_features=n_features,
+                               n_informative=n_informative,
+                               random_state=0)
+    X = StandardScaler().fit_transform(X)
+    train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.2, random_state=0)
+    lr = LogisticRegression()
+    lr.fit(train_x, train_y)
+    pred_y = lr.predict(test_x)
+    acc = accuracy_score(test_y, pred_y)
+    print('acc = {}'.format(acc))
 
-    xx = np.linspace(np.min(X), np.max(X), 100).reshape((-1, 1))
-    yy = regression.predict(xx)
-    plt.plot(xx, yy)
-    plt.show()
+    lr = linear_model.LogisticRegression()
+    lr.fit(train_x, train_y)
+    pred_y = lr.predict(test_x)
+    acc = accuracy_score(test_y, pred_y)
+    print('sklearn acc = {}'.format(acc))

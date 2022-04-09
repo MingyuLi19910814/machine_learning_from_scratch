@@ -1,55 +1,71 @@
 import numpy as np
-from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
+from sklearn import preprocessing
+from sklearn import datasets
+from sklearn.naive_bayes import GaussianNB
 
 class NaiveBayes:
     def __init__(self):
+        self.scaler = StandardScaler()
         self.prior = None
-        self.mean = None
-        self.std = None
+        self.feature_num = None
         self.class_num = None
-        self.feature_dim = None
-
     def fit(self, X, Y):
-        self.class_num = np.unique(Y).shape[0]
         X = np.asarray(X)
-        Y = np.asarray(Y).astype(int)
-        self.feature_dim = X.shape[1]
-        self.prior = np.zeros(self.class_num)
-        self.mean = np.zeros((self.class_num, self.feature_dim))
-        self.std = np.zeros_like(self.mean)
-        for class_idx in range(self.class_num):
-            features = X[Y == class_idx]
-            self.prior[class_idx] = features.shape[0] / X.shape[0]
-            self.mean[class_idx] = np.mean(features, axis=0)
-            self.std[class_idx] = np.std(features, axis=0)
+        Y = np.asarray(Y)
+        if X.ndim != 2 or X.shape[0] != Y.shape[0] or Y.ndim != 1:
+            raise ValueError("invalid input")
+        self.encoder = preprocessing.LabelEncoder()
+        self.encoder.fit(Y)
+        y_encoded = self.encoder.transform(Y)
+        self.feature_num = X.shape[1]
+        self.class_num = self.encoder.classes_.__len__()
+        self.mean = np.zeros(shape=(self.class_num, self.feature_num))
+        self.std = np.zeros(shape=(self.class_num, self.feature_num))
+        self.prior = np.zeros(shape=(self.class_num))
+        for label in range(self.encoder.classes_.__len__()):
+            idx = y_encoded == label
+            self.prior[label] = np.mean(idx)
+            self.mean[label] = np.mean(X[idx], axis=0)
+            self.std[label] = np.std(X[idx], axis=0)
 
     def predict(self, X):
-        ans = []
-        epsilon = 1e-13
-        for x in X:
-            probs = []
-            for class_idx in range(self.class_num):
-                prob = np.sum(np.log(self.__gaussian_density(x, class_idx) + epsilon)) + np.log(self.prior[class_idx] + epsilon)
-                probs.append(prob)
-            ans.append(np.argmax(probs))
+        X = np.asarray(X)
+        if X.ndim != 2 or X.shape[1] != self.feature_num:
+            raise ValueError("invalid input")
+        likelihood = np.exp(-0.5 * ((X[:, np.newaxis,:] - self.mean) / self.std) ** 2) / (self.std * np.sqrt(2 * np.pi)) + 1e-13
+        log_likelihood = np.sum(np.log(likelihood), axis=-1)
+        p = log_likelihood + np.log(self.prior)
+        ans = np.argmax(p, axis=-1)
+        ans = self.encoder.inverse_transform(ans)
         return ans
 
-    def __gaussian_density(self, x, class_idx):
-        mean = self.mean[class_idx]
-        std = self.std[class_idx]
-        density = np.exp(-0.5 * ((x - mean) / std) ** 2) / (std * np.sqrt(2 * np.pi))
-        return density
+
+
 
 
 if __name__ == "__main__":
-    iris = load_iris()
-    X = iris.data
-    Y = iris.target
-    train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.25)
-    classifier = NaiveBayes()
-    classifier.fit(train_x, train_y)
-    pred_y = classifier.predict(test_x)
-    accuracy = accuracy_score(test_y, pred_y)
-    print(accuracy)
+    n_samples = 1000
+    n_features = 4
+    n_informative = 4
+    n_redundant = 0
+    n_classes = 2
+    X, Y = datasets.make_classification(n_samples=n_samples,
+                                        n_classes=n_classes,
+                                        n_features=n_features,
+                                        n_informative=n_informative,
+                                        n_redundant=n_redundant)
+    train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.2)
+    cls = NaiveBayes()
+    cls.fit(train_x, train_y)
+    pred_y = cls.predict(test_x)
+    acc = accuracy_score(test_y, pred_y)
+    print('implemented acc = {}'.format(acc))
+
+    cls = GaussianNB()
+    cls.fit(train_x, train_y)
+    pred_y = cls.predict(test_x)
+    acc = accuracy_score(test_y, pred_y)
+    print('sklearn acc = {}'.format(acc))
